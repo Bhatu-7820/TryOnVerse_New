@@ -1,10 +1,11 @@
 {
-  "name": "traveloop-root",
+  "name": "tryonverse-root",
   "version": "1.0.0",
-  "description": "Traveloop Full Stack Application",
+  "description": "TryOnVerse AI-Powered Fashion Platform",
   "scripts": {
-    "predev": "kill-port 3001",
-    "dev": "npm run predev && npx concurrently \"npm run dev --prefix traveloop-frontend\" \"npm start --prefix traveloop-backend\"",
+    "build": "npm install --prefix traveloop-frontend && npm run build --prefix traveloop-frontend && npm install --prefix traveloop-backend",
+    "start": "node traveloop-backend/server.js",
+    "dev": "npx concurrently \"npm run dev --prefix traveloop-frontend\" \"npm start --prefix traveloop-backend\"",
     "install-all": "npm install --prefix traveloop-frontend && npm install --prefix traveloop-backend"
   },
   "devDependencies": {
