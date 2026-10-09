@@ -1,4 +1,6 @@
 require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
@@ -62,21 +64,10 @@ io.on('connection', (socket) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
-// Helmet — CSP allows external images (Unsplash, Google, Firebase, etc.)
+// Helmet — permissive for React SPA Vite bundle, Three.js canvas & external images
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
-      imgSrc: ["'self'", 'data:', 'blob:', '*'],   // allow ALL image origins
-      connectSrc: ["'self'", 'https:', 'wss:', 'ws:'],
-      mediaSrc: ["'self'", 'blob:', '*'],
-      frameSrc: ["'none'"],
-    },
-  },
-  crossOriginEmbedderPolicy: false,  // needed for cross-origin images/resources
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
 }));
 
 // CORS
@@ -125,6 +116,43 @@ app.use('/api/user/requests', require('./routes/requestRoutes'));
 app.use('/api/cities', require('./routes/cityRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
 app.use('/api/activities', require('./routes/activityRoutes'));
+
+// ─── Serve Frontend (React Single Page App) ────────────────────────────────
+const candidateDistPaths = [
+  path.join(__dirname, '../traveloop-frontend/dist'),
+  path.join(__dirname, '../../traveloop-frontend/dist'),
+  path.join(process.cwd(), 'traveloop-frontend/dist'),
+  path.join(process.cwd(), 'dist'),
+];
+
+const clientBuildDir = candidateDistPaths.find(dir => fs.existsSync(dir));
+
+if (clientBuildDir) {
+  console.log(`📦 Serving React frontend from: ${clientBuildDir}`);
+  app.use(express.static(clientBuildDir));
+
+  // SPA fallback for all GET navigation requests
+  app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.originalUrl.startsWith('/api') && !req.originalUrl.startsWith('/health')) {
+      return res.sendFile(path.join(clientBuildDir, 'index.html'));
+    }
+    next();
+  });
+} else {
+  console.warn('⚠️ Frontend dist directory not found. Candidates checked:', candidateDistPaths);
+  app.get('/', (req, res) => {
+    res.send(`
+      <div style="font-family:system-ui,-apple-system,sans-serif;max-width:600px;margin:80px auto;text-align:center;padding:32px;background:#0f172a;color:#f8fafc;border-radius:16px;">
+        <h1 style="color:#6366f1">TryOnVerse Backend is Running</h1>
+        <p style="color:#94a3b8">The API and MongoDB connection are online.</p>
+        <div style="margin-top:20px">
+          <a href="/health" style="color:#38bdf8;margin:0 10px;text-decoration:none">Health Check</a> |
+          <a href="/api/products" style="color:#38bdf8;margin:0 10px;text-decoration:none">Product API (180 Items)</a>
+        </div>
+      </div>
+    `);
+  });
+}
 
 // ─── Global Error Handler ──────────────────────────────────────────────────
 app.use(errorHandler);
