@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "TryOnVerse AI-Powered Fashion Platform",
   "scripts": {
-    "build": "npm install --prefix traveloop-frontend && npm run build --prefix traveloop-frontend && npm install --prefix traveloop-backend",
+    "build": "npm install --include=dev --prefix traveloop-frontend && npm run build --prefix traveloop-frontend && npm install --prefix traveloop-backend",
     "start": "node traveloop-backend/server.js",
     "dev": "npx concurrently \"npm run dev --prefix traveloop-frontend\" \"npm start --prefix traveloop-backend\"",
     "install-all": "npm install --prefix traveloop-frontend && npm install --prefix traveloop-backend"
