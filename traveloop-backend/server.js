@@ -55,7 +55,7 @@ io.on('connection', (socket) => {
   socket.on('join_user_room', (userId) => {
     if (userId) socket.join(userId);
   });
-  socket.on('disconnect', () => {});
+  socket.on('disconnect', () => { });
 });
 
 // ─── Middleware ─────────────────────────────────────────────────────────────
@@ -66,14 +66,14 @@ app.use(cookieParser());
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      defaultSrc:      ["'self'"],
-      scriptSrc:       ["'self'", "'unsafe-inline'"],
-      styleSrc:        ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      fontSrc:         ["'self'", 'https://fonts.gstatic.com', 'data:'],
-      imgSrc:          ["'self'", 'data:', 'blob:', '*'],   // allow ALL image origins
-      connectSrc:      ["'self'", 'https:', 'wss:', 'ws:'],
-      mediaSrc:        ["'self'", 'blob:', '*'],
-      frameSrc:        ["'none'"],
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+      imgSrc: ["'self'", 'data:', 'blob:', '*'],   // allow ALL image origins
+      connectSrc: ["'self'", 'https:', 'wss:', 'ws:'],
+      mediaSrc: ["'self'", 'blob:', '*'],
+      frameSrc: ["'none'"],
     },
   },
   crossOriginEmbedderPolicy: false,  // needed for cross-origin images/resources
@@ -103,28 +103,28 @@ app.use(rateLimit({
 app.get('/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
 
 // ─── TryOnVerse API Routes ────────────────────────────────────────────────
-app.use('/api/auth',          require('./routes/authRoutes'));
-app.use('/api/users',         require('./routes/userRoutes'));
-app.use('/api/products',      require('./routes/productRoutes'));
-app.use('/api/categories',    require('./routes/categoryRoutes'));
-app.use('/api/cart',          require('./routes/cartRoutes'));
-app.use('/api/wishlist',      require('./routes/wishlistRoutes'));
-app.use('/api/orders',        require('./routes/orderRoutes'));
-app.use('/api/payments',      require('./routes/paymentRoutes'));
-app.use('/api/body-scan',     require('./routes/bodyScanRoutes'));
-app.use('/api/designs',       require('./routes/designRoutes'));
-app.use('/api/auctions',      require('./routes/auctionRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/products', require('./routes/productRoutes'));
+app.use('/api/categories', require('./routes/categoryRoutes'));
+app.use('/api/cart', require('./routes/cartRoutes'));
+app.use('/api/wishlist', require('./routes/wishlistRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/payments', require('./routes/paymentRoutes'));
+app.use('/api/body-scan', require('./routes/bodyScanRoutes'));
+app.use('/api/designs', require('./routes/designRoutes'));
+app.use('/api/auctions', require('./routes/auctionRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
-app.use('/api/banners',       require('./routes/bannerRoutes'));
-app.use('/api/admin',         require('./routes/adminRoutes'));
+app.use('/api/banners', require('./routes/bannerRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 
 // ─── Legacy / Compatibility Routes ─────────────────────────────────────────
-app.use('/api/trips',         require('./routes/tripRoutes'));
-app.use('/api/support',       require('./routes/supportRoutes'));
+app.use('/api/trips', require('./routes/tripRoutes'));
+app.use('/api/support', require('./routes/supportRoutes'));
 app.use('/api/user/requests', require('./routes/requestRoutes'));
-app.use('/api/cities',        require('./routes/cityRoutes'));
-app.use('/api/ai',            require('./routes/aiRoutes'));
-app.use('/api/activities',    require('./routes/activityRoutes'));
+app.use('/api/cities', require('./routes/cityRoutes'));
+app.use('/api/ai', require('./routes/aiRoutes'));
+app.use('/api/activities', require('./routes/activityRoutes'));
 
 // ─── Global Error Handler ──────────────────────────────────────────────────
 app.use(errorHandler);
