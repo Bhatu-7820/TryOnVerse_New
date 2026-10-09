@@ -10,7 +10,7 @@ const Design = require('./models/Design');
 
 const seedData = async () => {
   try {
-    const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/tryonverse';
+    const mongoUri = process.env.MONGO_URI || 'mongodb+srv://Bhatu:erqjVHEs1Nfp7IYh@cluster0.dnz39u3.mongodb.net/tryonverse?retryWrites=true&w=majority&appName=Cluster0';
     await mongoose.connect(mongoUri);
     console.log(`Connected to MongoDB: ${mongoUri}`);
 
