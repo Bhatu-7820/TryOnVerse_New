@@ -1,15 +1,29 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+const addressSchema = new mongoose.Schema({
+  fullName: { type: String, required: true },
+  phone: { type: String, required: true },
+  street: { type: String, required: true },
+  city: { type: String, required: true },
+  state: { type: String, required: true },
+  zipCode: { type: String, required: true },
+  country: { type: String, default: 'India' },
+  isDefault: { type: Boolean, default: false }
+});
+
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  phone: { type: String },
   photoUrl: { type: String },
+  addresses: [addressSchema],
   preferences: {
     currency: { type: String, default: 'INR' },
-    emailNotifications: { type: Boolean, default: true }
+    emailNotifications: { type: Boolean, default: true },
+    preferredSize: { type: String, enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Custom'], default: 'M' }
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date

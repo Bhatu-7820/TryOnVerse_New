@@ -1,25 +1,39 @@
 const express = require('express');
-const { getStats, getUsers, deleteUser, getRequests, updateRequest, getAllTrips } = require('../controllers/adminController');
-const { getDestinations, createDestination, updateDestination, deleteDestination } = require('../controllers/destinationController');
-const { getAuditLogs } = require('../controllers/auditLogController');
-const { protect, authorize } = require('../middlewares/auth');
-
 const router = express.Router();
+const { protect, authorize } = require('../middlewares/auth');
+const {
+  getStats,
+  getAllOrders,
+  updateOrderStatus,
+  getAllUsers,
+  deleteUser,
+  getAllDesigns,
+  updateDesignStatus,
+  getAllScans
+} = require('../controllers/adminController');
+const {
+  getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct
+} = require('../controllers/productController');
 
-router.use(protect);
-router.use(authorize('admin'));
+// All admin routes require authentication and 'admin' role
+router.use(protect, authorize('admin'));
 
 router.get('/stats', getStats);
-router.get('/users', getUsers);
-router.get('/trips', getAllTrips);
+router.get('/orders', getAllOrders);
+router.put('/orders/:id/status', updateOrderStatus);
+router.get('/users', getAllUsers);
 router.delete('/users/:id', deleteUser);
-router.get('/requests', getRequests);
-router.put('/requests/:id', updateRequest);
-router.get('/logs', getAuditLogs);
+router.get('/designs', getAllDesigns);
+router.put('/designs/:id', updateDesignStatus);
+router.get('/body-scans', getAllScans);
 
-router.get('/destinations', getDestinations);
-router.post('/destinations', createDestination);
-router.put('/destinations/:id', updateDestination);
-router.delete('/destinations/:id', deleteDestination);
+// Product Management
+router.get('/products', getProducts);
+router.post('/products', createProduct);
+router.put('/products/:id', updateProduct);
+router.delete('/products/:id', deleteProduct);
 
 module.exports = router;

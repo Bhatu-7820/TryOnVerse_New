@@ -21,6 +21,8 @@ build/
 # Local database files
 *.db
 *.sqlite
+traveloop-backend/data/
+data/
 
 # Logs
 logs/

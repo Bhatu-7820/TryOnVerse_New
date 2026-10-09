@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import api from '@/services/api';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/helpers';
+import { FiArrowLeft, FiCheckCircle } from 'react-icons/fi';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -16,7 +16,7 @@ export default function ForgotPassword() {
     try {
       await api.post('/api/auth/forgotpassword', { email });
       setSent(true);
-      toast.success('Reset link generated!');
+      toast.success('Reset link processed!');
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -25,42 +25,72 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-traveloop-gradient p-4">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md rounded-[2.5rem] bg-white p-8 shadow-2xl dark:bg-slate-900">
-        <h2 className="text-3xl font-black">Reset Password</h2>
-        <p className="mt-2 text-slate-500">Enter your email and we'll send you a link to reset your password.</p>
+    <div className="min-h-screen bg-[#F7F7F7] flex flex-col justify-center py-12 sm:px-6 lg:px-8 text-[#111111]">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <Link to="/" className="inline-block">
+          <span className="font-extrabold text-2xl tracking-[0.2em] text-[#111111]">
+            TRYONVERSE
+          </span>
+        </Link>
+        <h2 className="mt-4 text-xl sm:text-2xl font-bold tracking-tight text-[#111111]">
+          Reset your password
+        </h2>
+        <p className="mt-1 text-xs sm:text-sm text-[#7E818C]">
+          Enter your email to receive password reset instructions
+        </p>
+      </div>
 
-        {sent ? (
-          <div className="mt-8 rounded-2xl bg-teal-50 p-6 text-center text-teal-700 dark:bg-teal-900/30 dark:text-teal-400">
-            <p className="font-bold">Check your response!</p>
-            <p className="mt-2 text-sm">Since this is a demo, the reset token is returned in the API response or console.</p>
-            <Link to="/login" className="mt-4 inline-block font-bold underline">Back to Login</Link>
-          </div>
-        ) : (
-          <form onSubmit={submit} className="mt-8 space-y-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-widest text-slate-400">Email Address</label>
-              <input 
-                type="email" 
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@example.com" 
-                className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none focus:border-teal-500 dark:border-slate-800 dark:bg-slate-950" 
-                required 
-              />
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
+        <div className="bg-white py-8 px-6 sm:px-8 border border-[#EAEAEC] rounded-md shadow-sm">
+          {sent ? (
+            <div className="text-center space-y-3">
+              <FiCheckCircle className="mx-auto text-3xl text-emerald-600" />
+              <h3 className="text-sm font-bold text-[#111111]">Reset instructions sent</h3>
+              <p className="text-xs text-[#7E818C]">
+                If an account exists for {email}, you will receive password reset instructions.
+              </p>
+              <div className="pt-2">
+                <Link to="/login" className="btn-primary text-xs !py-2.5 inline-block">
+                  Return to Sign In
+                </Link>
+              </div>
             </div>
-            <button 
-              disabled={loading}
-              className="w-full rounded-2xl bg-slate-900 py-4 font-bold text-white shadow-soft transition hover:-translate-y-1 dark:bg-teal-600"
-            >
-              {loading ? 'Sending...' : 'Send Reset Link'}
-            </button>
-            <div className="text-center">
-              <Link to="/login" className="text-sm font-bold text-slate-500 hover:text-teal-600">Back to Login</Link>
-            </div>
-          </form>
-        )}
-      </motion.div>
+          ) : (
+            <form onSubmit={submit} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#111111] mb-1">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="w-full px-3 py-2.5 border border-[#EAEAEC] rounded text-xs text-[#111111] focus:border-[#111111] outline-none"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full btn-primary text-xs !py-3 font-bold mt-2"
+              >
+                {loading ? 'Sending Instructions...' : 'Send Reset Link'}
+              </button>
+
+              <div className="text-center pt-2">
+                <Link
+                  to="/login"
+                  className="inline-flex items-center gap-1.5 text-xs text-[#7E818C] hover:text-[#111111] font-semibold"
+                >
+                  <FiArrowLeft className="text-xs" /> Back to Sign In
+                </Link>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

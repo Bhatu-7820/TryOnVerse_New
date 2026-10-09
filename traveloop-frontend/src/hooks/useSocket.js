@@ -10,24 +10,19 @@ export const useSocket = () => {
   const socketRef = useRef();
 
   useEffect(() => {
-    if (!user) return;
-
     socketRef.current = io(import.meta.env.VITE_API_URL || 'http://localhost:3001', {
       withCredentials: true,
     });
 
-    socketRef.current.on('connect', () => {
-      socketRef.current.emit('join_user_room', user.id);
-    });
+    if (user?.id) {
+      socketRef.current.on('connect', () => {
+        socketRef.current.emit('join_user_room', user.id);
+      });
+    }
 
     socketRef.current.on('new_notification', (notification) => {
       dispatch(addNotification(notification));
       toast(notification.message, { icon: '🔔' });
-    });
-
-    socketRef.current.on('ticket_update', (ticket) => {
-      // Could dispatch an action to update ticket state if on the Support page
-      toast.success(`Support Ticket Update: ${ticket.subject}`);
     });
 
     return () => {

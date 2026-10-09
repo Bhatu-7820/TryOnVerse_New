@@ -40,7 +40,7 @@ const allowedOrigins = [
 const io = new Server(server, {
   cors: {
     origin: (origin, cb) => {
-      if (!origin || allowedOrigins.includes(origin) || /^http:\/\/localhost:\d+$/.test(origin) || /\.netlify\.app$/.test(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || /^http:\/\/localhost:\d+$/.test(origin) || /\.netlify\.app$/.test(origin) || /\.onrender\.com$/.test(origin)) {
         return cb(null, true);
       }
       cb(new Error(`Socket CORS: ${origin} not allowed`));
@@ -102,12 +102,25 @@ app.use(rateLimit({
 // ─── Health check ──────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
 
-// ─── Routes ────────────────────────────────────────────────────────────────
+// ─── TryOnVerse API Routes ────────────────────────────────────────────────
 app.use('/api/auth',          require('./routes/authRoutes'));
+app.use('/api/users',         require('./routes/userRoutes'));
+app.use('/api/products',      require('./routes/productRoutes'));
+app.use('/api/categories',    require('./routes/categoryRoutes'));
+app.use('/api/cart',          require('./routes/cartRoutes'));
+app.use('/api/wishlist',      require('./routes/wishlistRoutes'));
+app.use('/api/orders',        require('./routes/orderRoutes'));
+app.use('/api/payments',      require('./routes/paymentRoutes'));
+app.use('/api/body-scan',     require('./routes/bodyScanRoutes'));
+app.use('/api/designs',       require('./routes/designRoutes'));
+app.use('/api/auctions',      require('./routes/auctionRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/banners',       require('./routes/bannerRoutes'));
 app.use('/api/admin',         require('./routes/adminRoutes'));
+
+// ─── Legacy / Compatibility Routes ─────────────────────────────────────────
 app.use('/api/trips',         require('./routes/tripRoutes'));
 app.use('/api/support',       require('./routes/supportRoutes'));
-app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/user/requests', require('./routes/requestRoutes'));
 app.use('/api/cities',        require('./routes/cityRoutes'));
 app.use('/api/ai',            require('./routes/aiRoutes'));

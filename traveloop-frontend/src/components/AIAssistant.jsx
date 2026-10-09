@@ -1,78 +1,54 @@
-import { useState, useRef, useEffect, lazy, Suspense } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMessageSquare, FiSend, FiX, FiInfo, FiTrash2 } from 'react-icons/fi';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
-import { fetchChatHistory, sendChatMessage, clearChatHistory } from '@/store/slices/aiSlice';
-
-// Lazy-load react-markdown so a load failure doesn't crash the whole app
-const ReactMarkdown = lazy(() =>
-  import('react-markdown').catch(() => ({
-    default: ({ children }) => <span>{children}</span>
-  }))
-);
+import { FiMessageSquare, FiSend, FiX } from 'react-icons/fi';
+import { useSelector } from 'react-redux';
 
 export default function AIAssistant() {
-  const dispatch = useDispatch();
-  const location = useLocation();
-  
-  const { chatHistory, chatStatus } = useSelector((state) => state.ai);
-  const { trips } = useSelector((state) => state.trips);
   const { user } = useSelector((state) => state.auth);
-  
+
   const [isOpen, setIsOpen] = useState(false);
-  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([
+    {
+      sender: 'assistant',
+      text: "Hello! I am your TryOnVerse styling assistant. Ask me about finding your size, virtual try-ons, custom tailoring, or new arrivals."
+    }
+  ]);
+  const [input, setInput] = useState('');
+  const [typing, setTyping] = useState(false);
   const scrollRef = useRef(null);
 
-  // Auto-scroll to bottom of chat
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [chatHistory, isOpen]);
+  }, [messages, isOpen]);
 
-  // Load chat history when chat is opened (only if authenticated)
-  useEffect(() => {
-    if (isOpen && user) {
-      dispatch(fetchChatHistory());
-    }
-  }, [dispatch, isOpen, user]);
-
-  // Extract active trip details if the user is currently viewing/building a trip
-  const activeTripContext = (() => {
-    const match = location.pathname.match(/\/trip\/([a-zA-Z0-9_-]+)/);
-    if (match && match[1]) {
-      const tripId = match[1];
-      const activeTrip = (trips || []).find(t => t._id === tripId || t.id === tripId);
-      if (activeTrip) {
-        return {
-          tripName: activeTrip.name,
-          startDate: activeTrip.startDate,
-          endDate: activeTrip.endDate,
-          stopsCount: activeTrip.stops?.length || 0,
-          budgetLimit: activeTrip.budgetLimit,
-          stops: activeTrip.stops?.map(s => `${s.city}, ${s.country}`) || []
-        };
-      }
-    }
-    return null;
-  })();
-
-  const handleClearChat = () => {
-    if (window.confirm("Are you sure you want to clear your chat history?")) {
-      dispatch(clearChatHistory());
-    }
-  };
-
-  const handleSend = async (e) => {
+  const handleSend = (e) => {
     e.preventDefault();
-    if (!message.trim() || chatStatus === 'loading') return;
+    if (!input.trim() || typing) return;
 
-    const userMsg = message.trim();
-    setMessage('');
+    const userText = input.trim();
+    setInput('');
+    setMessages((prev) => [...prev, { sender: 'user', text: userText }]);
+    setTyping(true);
 
-    const context = activeTripContext ? { activeTrip: activeTripContext } : {};
-    dispatch(sendChatMessage({ message: userMsg, context }));
+    setTimeout(() => {
+      let reply = "You can explore our Size Assistant to find recommended sizes based on your height and measurements, or check our Size Chart on any product page.";
+      const lower = userText.toLowerCase();
+
+      if (lower.includes('3d') || lower.includes('try') || lower.includes('virtual')) {
+        reply = "You can launch our 3D Virtual Fitting Room from any product card or by visiting /try-on to preview fabric draping, size silhouettes, and colors in real-time.";
+      } else if (lower.includes('size') || lower.includes('scan') || lower.includes('fit') || lower.includes('measure')) {
+        reply = "Use our Size Assistant at /body-scan to calibrate your measurements and save a size profile to your account for accurate fit recommendations.";
+      } else if (lower.includes('auction') || lower.includes('bid')) {
+        reply = "Check out our Fashion Runway Auctions at /auctions to discover limited-edition drops and place live bids.";
+      } else if (lower.includes('design') || lower.includes('custom') || lower.includes('tailor')) {
+        reply = "Visit our Custom Studio at /designer to pick a silhouette, apply colors and typography, and request tailor production.";
+      }
+
+      setMessages((prev) => [...prev, { sender: 'assistant', text: reply }]);
+      setTyping(false);
+    }, 600);
   };
 
   return (
@@ -80,141 +56,88 @@ export default function AIAssistant() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="mb-3 flex h-[min(620px,calc(100dvh-6.5rem))] w-[calc(100vw-2rem)] max-w-sm flex-col overflow-hidden rounded-[1.5rem] border border-white/20 bg-white shadow-2xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95 sm:mb-4 sm:w-96 sm:rounded-[2rem]"
+            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+            className="mb-3 flex h-[480px] w-[calc(100vw-2rem)] max-w-sm flex-col overflow-hidden rounded-lg border border-[#EAEAEC] bg-white shadow-xl sm:mb-4 sm:w-96 text-[#111111]"
           >
             {/* Header */}
-            <div className="flex items-center justify-between gap-3 bg-gradient-to-r from-teal-500 via-blue-500 to-indigo-600 p-3 text-white sm:p-4">
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="grid h-8 w-8 place-items-center rounded-full bg-white/20 animate-pulse">
-                  <FiInfo className="text-sm" />
+            <div className="flex items-center justify-between border-b border-[#EAEAEC] bg-[#111111] p-3.5 text-white">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white">
+                  <FiMessageSquare className="text-xs" />
                 </div>
-                <div className="min-w-0">
-                  <span className="font-bold block text-sm sm:text-base leading-none">Traveloop</span>
-                  <span className="block truncate text-[10px] text-white/80">Premium Travel Companion</span>
+                <div>
+                  <h3 className="text-xs font-bold leading-none">Fit & Style Concierge</h3>
+                  <p className="text-[10px] text-gray-300 mt-0.5">Shopping, Sizing & Try-On Guide</p>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                {user && chatHistory.length > 0 && (
-                  <button 
-                    onClick={handleClearChat} 
-                    title="Clear Chat History"
-                    className="rounded-full p-1.5 hover:bg-white/10 transition text-white/90 hover:text-white"
-                  >
-                    <FiTrash2 />
-                  </button>
-                )}
-                <button 
-                  onClick={() => setIsOpen(false)} 
-                  className="rounded-full p-1.5 hover:bg-white/10 transition"
-                >
-                  <FiX />
-                </button>
-              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1 text-gray-300 hover:text-white transition"
+              >
+                <FiX className="text-base" />
+              </button>
             </div>
 
-            {/* Context Badge */}
-            {activeTripContext && (
-              <div className="flex items-center justify-between gap-2 border-b border-teal-500/15 bg-teal-500/10 px-3 py-1.5 text-xs text-teal-600 dark:bg-teal-500/20 dark:text-teal-400 sm:px-4">
-                <span className="truncate">Context: Active Trip <b>{activeTripContext.tripName}</b></span>
-                <span className="shrink-0 bg-teal-500 text-white rounded-full px-1.5 py-0.5 text-[8px] font-bold">ACTIVE</span>
-              </div>
-            )}
-
-            {/* Message Area */}
-            <div 
-              ref={scrollRef} 
-              className="flex-1 space-y-4 overflow-y-auto p-3 scrollbar-hide dark:bg-slate-950/40 sm:p-4"
-            >
-              {!user ? (
-                <div className="flex flex-col items-center justify-center h-full text-center p-6 space-y-4">
-                  <div className="p-4 rounded-full bg-gradient-to-br from-teal-500/10 to-indigo-600/10 dark:from-teal-500/20 dark:to-indigo-600/20 border border-teal-500/20">
-                    <FiMessageSquare className="text-4xl text-teal-500 animate-pulse" />
-                  </div>
-                  <h3 className="font-bold text-lg text-slate-800 dark:text-white">Travel Companion</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-[240px] leading-relaxed">
-                    Log in to unlock custom itineraries, smart packing lists, budget planning, and 24/7 personalized travel assistance.
-                  </p>
-                  <a
-                    href="/login"
-                    className="w-full py-2.5 px-4 rounded-xl text-center text-xs font-semibold text-white bg-gradient-to-r from-teal-500 via-blue-500 to-indigo-600 shadow-lg shadow-teal-500/25 hover:opacity-95 active:scale-95 transition-all duration-200"
+            {/* Chat Messages */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 text-xs bg-[#FAFAFA]">
+              {messages.map((m, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded px-3.5 py-2.5 text-xs leading-relaxed ${
+                      m.sender === 'user'
+                        ? 'bg-[#111111] text-white'
+                        : 'bg-white text-[#111111] border border-[#EAEAEC] shadow-sm'
+                    }`}
                   >
-                    Log In / Sign Up
-                  </a>
-                </div>
-              ) : chatHistory.length === 0 ? (
-                <div className="text-center py-10 text-slate-400 dark:text-slate-500 text-xs">
-                  <FiMessageSquare className="mx-auto text-3xl mb-2 opacity-50" />
-                  Ask me anything about flights, hotel picks, or itinerary optimizations!
-                </div>
-              ) : (
-                chatHistory.map((msg, i) => (
-                  <div key={i} className="space-y-1">
-                    {/* User message */}
-                    <div className="flex justify-end">
-                      <div className="max-w-[80%] rounded-[1.25rem] rounded-tr-none bg-gradient-to-r from-teal-500 to-blue-500 px-4 py-2.5 text-sm text-white shadow-soft">
-                        {msg.message}
-                      </div>
-                    </div>
-                    {/* AI reply */}
-                    {msg.reply && (
-                      <div className="flex justify-start mt-1">
-                        <div className="max-w-[85%] rounded-[1.25rem] rounded-tl-none bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-4 py-2.5 text-sm shadow-sm prose dark:prose-invert leading-relaxed break-words">
-                          {msg.reply === '...' ? (
-                            <div className="flex gap-1.5 items-center py-1">
-                              <div className="h-2 w-2 animate-bounce rounded-full bg-teal-500"></div>
-                              <div className="h-2 w-2 animate-bounce rounded-full bg-teal-500 delay-75"></div>
-                              <div className="h-2 w-2 animate-bounce rounded-full bg-teal-500 delay-150"></div>
-                            </div>
-                          ) : (
-                            <Suspense fallback={<span>{msg.reply}</span>}>
-                              <div className="markdown-content">
-                                <ReactMarkdown>{msg.reply}</ReactMarkdown>
-                              </div>
-                            </Suspense>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                    {m.text}
                   </div>
-                ))
+                </div>
+              ))}
+              {typing && (
+                <div className="flex justify-start">
+                  <div className="rounded bg-white px-3 py-2 text-[#7E818C] border border-[#EAEAEC] text-[11px]">
+                    Checking styling guide...
+                  </div>
+                </div>
               )}
             </div>
 
-            {/* Form Input */}
-            <form 
-              onSubmit={handleSend} 
-              className="border-t border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:p-4"
-            >
-              <div className="flex gap-2">
-                <input
-                  value={message}
-                  onChange={e => setMessage(e.target.value)}
-                  placeholder={user ? "Ask about hotels, packing, weather..." : "Please log in to chat..."}
-                  className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-teal-500 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:focus:bg-slate-950"
-                  disabled={chatStatus === 'loading' || !user}
-                />
-                <button 
-                  type="submit" 
-                  disabled={chatStatus === 'loading' || !message.trim() || !user} 
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-teal-500 to-blue-500 text-white shadow-md transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-                >
-                  <FiSend />
-                </button>
-              </div>
+            {/* Input Bar */}
+            <form onSubmit={handleSend} className="p-3 border-t border-[#EAEAEC] bg-white flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask about size, try-on, or custom looks..."
+                className="flex-1 rounded border border-[#EAEAEC] px-3 py-2 text-xs text-[#111111] focus:border-[#111111] focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={typing || !input.trim()}
+                className="flex h-8 w-8 items-center justify-center rounded bg-[#111111] text-white hover:bg-black disabled:opacity-40 transition"
+              >
+                <FiSend className="text-xs" />
+              </button>
             </form>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-teal-500 to-blue-500 text-xl text-white shadow-lg shadow-teal-500/25 transition hover:scale-110 active:scale-95 sm:h-14 sm:w-14 sm:text-2xl"
-      >
-        <FiMessageSquare />
-      </button>
+      {/* Trigger Button */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-[#111111] text-white shadow-md hover:bg-black transition"
+          title="Fit & Style Concierge"
+        >
+          <FiMessageSquare className="text-lg" />
+        </button>
+      )}
     </div>
   );
 }

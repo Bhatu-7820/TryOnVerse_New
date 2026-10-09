@@ -1,141 +1,152 @@
 const User = require('../models/User');
-const Trip = require('../models/Trip');
-const AgentRequest = require('../models/AgentRequest');
-const Notification = require('../models/Notification');
-const mongoose = require('mongoose');
-const { logAction } = require('../controllers/auditLogController');
+const Product = require('../models/Product');
+const Order = require('../models/Order');
+const Auction = require('../models/Auction');
+const Design = require('../models/Design');
+const BodyScan = require('../models/BodyScan');
+const Category = require('../models/Category');
 
-// Get overall stats: total users, total trips, top 5 cities by trip count
 exports.getStats = async (req, res, next) => {
   try {
     const totalUsers = await User.countDocuments();
-    const totalTrips = await Trip.countDocuments();
-    
-    // Aggregations
-    const popularCities = await Trip.aggregate([
-      { $unwind: "$stops" },
-      { $group: { _id: "$stops.city", count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 5 },
-      { $project: { name: "$_id", value: "$count", _id: 0 } }
-    ]);
+    const totalProducts = await Product.countDocuments();
+    const totalOrders = await Order.countDocuments();
+    const totalDesigns = await Design.countDocuments();
+    const totalScans = await BodyScan.countDocuments();
+    const activeAuctions = await Auction.countDocuments({ status: 'ACTIVE' });
+    const pendingOrders = await Order.countDocuments({ orderStatus: { $in: ['PENDING', 'CONFIRMED', 'PROCESSING'] } });
 
-    const popularActivityTypes = await Trip.aggregate([
-      { $unwind: "$stops" },
-      { $unwind: "$stops.activities" },
-      { $group: { _id: "$stops.activities.type", count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 5 },
-      { $project: { name: "$_id", value: "$count", _id: 0 } }
+    // Calculate total revenue from paid orders
+    const revenueResult = await Order.aggregate([
+      { $match: { paymentStatus: 'PAID' } },
+      { $group: { _id: null, totalRevenue: { $sum: '$total' } } }
     ]);
+    const revenue = revenueResult[0]?.totalRevenue || 0;
 
-    const averageStopsPerTrip = await Trip.aggregate([
-      { $project: { stopsCount: { $size: "$stops" } } },
-      { $group: { _id: null, avgStops: { $avg: "$stopsCount" } } }
-    ]);
+    // Recent 5 orders
+    const recentOrders = await Order.find().sort('-createdAt').limit(5).populate('userId', 'name email');
+
+    // Recent 5 users
+    const recentUsers = await User.find().select('-password').sort('-createdAt').limit(5);
 
     res.status(200).json({
-      totalUsers,
-      totalTrips,
-      popularCities,
-      popularActivityTypes: popularActivityTypes.filter(a => a.name),
-      averageStopsPerTrip: averageStopsPerTrip[0]?.avgStops || 0
+      success: true,
+      data: {
+        totalUsers,
+        totalProducts,
+        totalOrders,
+        totalDesigns,
+        totalScans,
+        revenue,
+        pendingOrders,
+        activeAuctions,
+        recentOrders,
+        recentUsers
+      }
     });
   } catch (err) {
     next(err);
   }
 };
 
-// List all users (admin view)
-exports.getUsers = async (req, res, next) => {
+exports.getAllOrders = async (req, res, next) => {
   try {
-    const users = await User.aggregate([
-      {
-        $lookup: {
-          from: 'trips',
-          localField: '_id',
-          foreignField: 'userId',
-          as: 'trips'
-        }
-      },
-      {
-        $project: {
-          name: 1,
-          email: 1,
-          role: 1,
-          tripCount: { $size: '$trips' }
-        }
-      }
-    ]);
-    res.status(200).json(users);
+    const { status, page = 1, limit = 20 } = req.query;
+    const query = {};
+    if (status) query.orderStatus = status;
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const total = await Order.countDocuments(query);
+    const orders = await Order.find(query)
+      .populate('userId', 'name email phone')
+      .sort('-createdAt')
+      .skip(skip)
+      .limit(Number(limit));
+
+    res.status(200).json({
+      success: true,
+      total,
+      page: Number(page),
+      pages: Math.ceil(total / Number(limit)),
+      data: orders
+    });
   } catch (err) {
     next(err);
   }
 };
 
-// Delete a user by ID (admin)
+exports.updateOrderStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { orderStatus, paymentStatus } = req.body;
+
+    const order = await Order.findById(id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    if (orderStatus) order.orderStatus = orderStatus;
+    if (paymentStatus) order.paymentStatus = paymentStatus;
+
+    await order.save();
+    res.status(200).json({ success: true, data: order });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getAllUsers = async (req, res, next) => {
+  try {
+    const users = await User.find().select('-password').sort('-createdAt');
+    res.status(200).json({ success: true, data: users });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid user ID' });
+    if (id === req.user.id) {
+      return res.status(400).json({ message: 'Admin cannot delete themselves' });
     }
     await User.findByIdAndDelete(id);
-    await logAction(req.user.id, 'DELETE_USER', 'User', id, `Deleted user ${id}`, req.ip);
     res.status(200).json({ success: true, message: 'User deleted' });
   } catch (err) {
     next(err);
   }
 };
 
-exports.getAllTrips = async (req, res, next) => {
+exports.getAllDesigns = async (req, res, next) => {
   try {
-    const trips = await Trip.find().populate('userId', 'name email').sort('-createdAt');
-    res.status(200).json(trips);
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.getRequests = async (req, res, next) => {
-  try {
-    const requests = await AgentRequest.find()
-      .populate('userId', 'name email')
-      .populate('tripId', 'name')
-      .sort('-createdAt');
-    res.status(200).json(requests);
+    const designs = await Design.find().populate('userId', 'name email').sort('-createdAt');
+    res.status(200).json({ success: true, data: designs });
   } catch (err) {
     next(err);
   }
 };
 
-exports.updateRequest = async (req, res, next) => {
+exports.updateDesignStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status, response, discount } = req.body;
-    const request = await AgentRequest.findById(id);
-    if (!request) return res.status(404).json({ message: 'Request not found' });
+    const { status, adminFeedback, estimatedPrice } = req.body;
 
-    request.status = status || request.status;
-    request.response = response || request.response;
-    await request.save();
+    const design = await Design.findById(id);
+    if (!design) return res.status(404).json({ message: 'Design not found' });
 
-    await logAction(req.user.id, 'UPDATE_REQUEST', 'AgentRequest', id, `Status set to ${status}`, req.ip);
+    if (status) design.status = status;
+    if (adminFeedback) design.adminFeedback = adminFeedback;
+    if (estimatedPrice) design.estimatedPrice = estimatedPrice;
 
-    // Persist notification to DB and emit via Socket.io
-    const notifData = {
-      userId: request.userId,
-      title: 'Agent Request Update',
-      message: `Your planning request has been ${request.status}.`,
-      type: 'system',
-    };
-    const savedNotif = await Notification.create(notifData);
-    const io = req.app.get('io');
-    if (io) {
-      io.to(request.userId.toString()).emit('new_notification', savedNotif);
-    }
+    await design.save();
+    res.status(200).json({ success: true, data: design });
+  } catch (err) {
+    next(err);
+  }
+};
 
-    res.status(200).json(request);
+exports.getAllScans = async (req, res, next) => {
+  try {
+    const scans = await BodyScan.find().populate('userId', 'name email').sort('-createdAt').limit(50);
+    res.status(200).json({ success: true, data: scans });
   } catch (err) {
     next(err);
   }

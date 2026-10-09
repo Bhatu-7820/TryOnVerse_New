@@ -1,20 +1,41 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: 'class',
   content: ['./index.html', './public/index.html', './src/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Outfit', 'Inter', 'sans-serif'],
+        sans: ['Inter', 'Assistant', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Inter', 'Assistant', 'sans-serif'],
+      },
+      colors: {
+        fashion: {
+          dark: '#111111',
+          primary: '#282C3F',
+          secondary: '#535665',
+          muted: '#7E818C',
+          light: '#F5F5F6',
+          bg: '#FFFFFF',
+          border: '#EAEAEC',
+          accent: '#FF3F6C',
+          'accent-light': '#FFF0F4',
+          discount: '#03A685',
+          'discount-bg': '#E6F7F3',
+          rating: '#14958F'
+        }
       },
       boxShadow: {
-        soft: '0 10px 30px rgba(0,0,0,0.08)',
-        glass: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+        card: '0 2px 12px rgba(0,0,0,0.06)',
+        'card-hover': '0 6px 18px rgba(0,0,0,0.1)',
+        subtle: '0 1px 4px rgba(0,0,0,0.05)',
+        dropdown: '0 8px 24px rgba(0,0,0,0.12)',
       },
-      backgroundImage: {
-        'traveloop-gradient': 'linear-gradient(135deg, rgba(20,184,166,0.12), rgba(59,130,246,0.10), rgba(249,115,22,0.10))',
-        'premium-dark': 'linear-gradient(to right bottom, #0f172a, #1e1b4b, #312e81)',
-      },
+      borderRadius: {
+        sm: '2px',
+        DEFAULT: '4px',
+        md: '6px',
+        lg: '8px',
+        xl: '12px',
+      }
     },
   },
   plugins: [],
